@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Enumeration;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -32,11 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
-import org.apache.sling.junit.Renderer;
-import org.apache.sling.junit.RendererSelector;
-import org.apache.sling.junit.RequestParser;
-import org.apache.sling.junit.TestSelector;
-import org.apache.sling.junit.TestsManager;
+import org.apache.sling.junit.*;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -187,6 +184,24 @@ public class JUnitServlet extends HttpServlet {
     throws ServletException, IOException {
         final TestSelector selector = getTestSelector(request);
         final boolean forceReload = getForceReloadOption(request);
+
+        final boolean createContext =  !SlingTestContextProvider.hasContext();
+        if(createContext) {
+            SlingTestContextProvider.createContext();
+        }
+
+        System.out.println( " request " + request.getParameterMap().size());
+        Enumeration<String> parameterNames = request.getParameterNames();
+
+        while (parameterNames.hasMoreElements()) {
+            String paramName = parameterNames.nextElement();
+
+            String[] paramValues = request.getParameterValues(paramName);
+            String paramValue = paramValues[0];
+            SlingTestContextProvider.getContext().input().put(paramName, paramValue);
+            System.out.println( " adding " + paramName + " " + paramValue );
+        }
+
         log.info("POST request, executing tests: {}, {}={}", 
                 new Object[] { selector, FORCE_RELOAD_PARAM, forceReload});
         

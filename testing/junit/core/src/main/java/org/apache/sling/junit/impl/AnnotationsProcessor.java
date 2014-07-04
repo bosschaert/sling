@@ -20,7 +20,10 @@ import java.lang.reflect.Field;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.sling.junit.SlingTestContext;
+import org.apache.sling.junit.SlingTestContextProvider;
 import org.apache.sling.junit.TestObjectProcessor;
+import org.apache.sling.junit.annotations.TestParameter;
 import org.apache.sling.junit.annotations.TestReference;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -54,6 +57,8 @@ public class AnnotationsProcessor implements TestObjectProcessor {
         for(Field f : testObject.getClass().getDeclaredFields()) {
             if(f.isAnnotationPresent(TestReference.class)) {
                 processTestReference(testObject, f);
+            } else if(f.isAnnotationPresent(TestParameter.class)) {
+                processTestParameter(testObject, f);
             }
         }
         return testObject;
@@ -72,11 +77,30 @@ public class AnnotationsProcessor implements TestObjectProcessor {
         if(service != null) {
             f.setAccessible(true);
             f.set(testObject, service);
-            log.debug("Injected service {} into field {}", 
-                    serviceType.getName(), f.getName());
+            log.debug("Injected service {} into field {}", serviceType.getName(), f.getName());
         } else {
-            log.warn("Service {} not found for field {}", 
+            log.warn("Service {} not found for field {}",
                     serviceType.getName(), f.getName());
+        }
+    }
+
+    /** Process the TestReference annotation to inject services into fields */
+    private void processTestParameter(Object testObject, Field f) throws Exception {
+
+        if(!SlingTestContextProvider.hasContext()) {
+            final String msg = "Null SlingTestContextProvider in processTestReference(), not activated?";
+            log.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+
+        System.out.println( "getParameter");
+        Object parameter = getParameter( testObject.getClass(), f);
+        if(parameter != null) {
+            f.setAccessible(true);
+            f.set(testObject, parameter);
+            log.debug("Injected Parameter {} into field {}", f.getName(), testObject.getClass().getName());
+        } else {
+            log.warn("Parameter {} not found for class {}", f.getName(), testObject.getClass().getName());
         }
     }
     
@@ -91,6 +115,22 @@ public class AnnotationsProcessor implements TestObjectProcessor {
                 result = bundleContext.getService(ref);
             }
         }
+        return result;
+    }
+
+    private Object getParameter(Class<?> c, Field f) {
+
+        System.out.println( "getParameter("+c.getName() + "." + f.getName()+")");
+        Object result = null;
+
+        if(SlingTestContextProvider.hasContext()) {
+            if (SlingTestContextProvider.getContext().input().containsKey(c.getName() + "." + f.getName())) {
+                result = SlingTestContextProvider.getContext().input().get(c.getName() + "." + f.getName());
+            } else {
+                System.out.println(" getParameters don't have a context " + SlingTestContextProvider.getContext().input().size());
+            }
+        }
+
         return result;
     }
 }
