@@ -198,6 +198,8 @@ public class FrameworkPerformanceMethod extends FrameworkMethod {
 				&& !performanceSuiteState.testSuiteName.equals(ParameterizedTestList.TEST_CASE_ONLY)) {
 
 			recursiveCallSpecificMethod(this.target.getClass(), this.target, After.class);
+		} else {
+			recursiveCallSpecificMethod(this.target.getClass(), this.target, After.class);
 		}
 
 		// Check if this is the last test running from a PerformanceSuite
