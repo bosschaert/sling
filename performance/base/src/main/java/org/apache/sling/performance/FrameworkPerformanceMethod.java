@@ -18,10 +18,9 @@ package org.apache.sling.performance;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.apache.sling.junit.SlingTestContextProvider;
-import org.apache.sling.performance.annotations.AfterMethodInvocation;
-import org.apache.sling.performance.annotations.BeforeMethodInvocation;
-import org.apache.sling.performance.annotations.PerformanceTest;
-import org.apache.sling.performance.annotations.PerformanceRunner;
+import org.apache.sling.performance.annotation.AfterMethodInvocation;
+import org.apache.sling.performance.annotation.BeforeMethodInvocation;
+import org.apache.sling.performance.annotation.PerformanceTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runners.model.FrameworkMethod;
