@@ -43,23 +43,29 @@ public class SimpleTest {
     private Session session;
 
     private Node testRoot;
+    
+    private ResourceResolver adminResolver;
 
     @TestParameter
     public String path;
 
     @Before
     public void beforeSuite() throws Exception {
-        ResourceResolver adminResolver = this.resolverFactory.getAdministrativeResourceResolver(null);
+        adminResolver = this.resolverFactory.getAdministrativeResourceResolver(null);
         this.session = adminResolver.adaptTo(Session.class);
         this.testRoot = getTestRootNode();
     }
 
     @After
     public void afterSuite() throws Exception {
-        if (testRoot != null) {
-            testRoot.remove();
-        }
-        session.save();
+    	if (session.isLive()) {
+            if (testRoot != null) {
+                testRoot.remove();
+            }
+            session.save();
+            adminResolver.close();
+    	}
+
     }
 
     @Test
