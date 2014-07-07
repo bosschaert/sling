@@ -3,7 +3,6 @@ package org.apache.sling.performance;
 import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.apache.sling.junit.SlingTestContextProvider;
-import org.apache.sling.performance.annotations.PerformanceRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
