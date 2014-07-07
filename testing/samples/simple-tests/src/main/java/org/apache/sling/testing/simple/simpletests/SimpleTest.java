@@ -20,8 +20,6 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.junit.annotations.TestParameter;
 import org.apache.sling.junit.annotations.TestReference;
-import org.apache.sling.performance.annotations.PerformanceRunner;
-import org.apache.sling.performance.annotations.PerformanceTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +30,8 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.naming.NamingException;
+import org.apache.sling.performance.PerformanceRunner;
+import org.apache.sling.performance.annotation.PerformanceTest;
 
 //@RunWith(SlingAnnotationsTestRunner.class)
 @RunWith(PerformanceRunner.class)
