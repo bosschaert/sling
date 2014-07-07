@@ -1,16 +1,18 @@
 package org.apache.sling.performance;
 
+import org.apache.commons.io.output.FileWriterWithEncoding;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.apache.sling.junit.SlingTestContextProvider;
+import org.apache.sling.performance.annotations.PerformanceRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import org.apache.commons.io.output.FileWriterWithEncoding;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ReportLogger {
 
@@ -20,7 +22,8 @@ public class ReportLogger {
     public static final String REPORTS_DIR = "performance-reports";
 
 	public enum ReportType {
-		TXT
+		TXT,
+        CTX
 	}
 
     /**
@@ -37,10 +40,13 @@ public class ReportLogger {
     public static void writeReport(String testSuiteName, String testCaseName, String className, String methodName,
             DescriptiveStatistics statistics, ReportType reportType, PerformanceRunner.ReportLevel reportLevel) throws Exception {
 		switch (reportType) {
-		case TXT:
+            case TXT:
                 writeReportTxt(testSuiteName, testCaseName, className, methodName, statistics, reportLevel);
-			break;
-		default:
+                break;
+            case CTX:
+                writeReportCtx(testSuiteName, testCaseName, className, methodName, statistics, reportLevel);
+                break;
+            default:
                 throw new Exception("The specified reporting format is not yet supported");
 		}
 	}
@@ -53,21 +59,16 @@ public class ReportLogger {
      * @param className
      * @param methodName
 	 * @param statistics
-     * @param reportlevel
+     * @param reportLevel
      * @throws Exception
 	 */
     public static void writeReportTxt(String testSuiteName, String testCaseName, String className, String methodName,
-            DescriptiveStatistics statistics, PerformanceRunner.ReportLevel reportlevel) throws Exception {
-
-        // Short class form
-        String shortClassName = className.substring(className.lastIndexOf(".") + 1);
+            DescriptiveStatistics statistics, PerformanceRunner.ReportLevel reportLevel) throws Exception {
 
         File reportDir = new File("target/" + REPORTS_DIR);
-		if (!reportDir.exists()) {
-            if (!reportDir.mkdir()) {
+		if (!reportDir.exists() && !reportDir.mkdir()) {
                 throw new IOException("Unable to create " + REPORTS_DIR + " directory");
 		}
-        }
 
 		// need this in the case a user wants to set the suite name from the
 		// command line
@@ -79,14 +80,41 @@ public class ReportLogger {
 			}
 		}
 
-        String resultFileName = shortClassName;
-		if (reportlevel.equals(PerformanceRunner.ReportLevel.ClassLevel)){
-			writeReportClassLevel(resultFileName, testSuiteName, statistics);
-			}else if (reportlevel.equals(PerformanceRunner.ReportLevel.MethodLevel)){
-            resultFileName = shortClassName + "." + methodName;
+		if (reportLevel.equals(PerformanceRunner.ReportLevel.ClassLevel)) {
+            String resultFileName = className;
+            writeReportClassLevel(resultFileName, testSuiteName, statistics);
+        } else if (reportLevel.equals(PerformanceRunner.ReportLevel.MethodLevel)) {
+            String resultFileName = className + "." + methodName;
             writeReportMethodLevel(resultFileName, testSuiteName, testCaseName, className, methodName, statistics);
-			}
+        }
 	}
+
+    public static void writeReportCtx(String testSuiteName, String testCaseName, String className, String methodName,
+                                      DescriptiveStatistics statistics, PerformanceRunner.ReportLevel reportLevel) throws Exception {
+
+        SlingTestContextProvider.getContext().output().put("test_suite_name",testSuiteName);
+        SlingTestContextProvider.getContext().output().put("test_suite_name",testCaseName);
+        SlingTestContextProvider.getContext().output().put("test_suite_name",className);
+        SlingTestContextProvider.getContext().output().put("test_suite_name",methodName);
+
+        // need this in the case a user wants to set the suite name from the
+        // command line
+        // useful if we run the test cases from the command line for example
+        // by using maven
+        if (testSuiteName.equals(ParameterizedTestList.TEST_CASE_ONLY)) {
+            if (System.getProperty("testsuitename") != null) {
+                testSuiteName = System.getProperty("testsuitename");
+            }
+        }
+
+        if (reportLevel.equals(PerformanceRunner.ReportLevel.ClassLevel)) {
+            String resultFileName = className;
+            writeCtxReportClassLevel(resultFileName, testSuiteName, statistics);
+        } else if (reportLevel.equals(PerformanceRunner.ReportLevel.MethodLevel)) {
+            String resultFileName = className + "." + methodName;
+            writeCtxReportMethodLevel(resultFileName, testSuiteName, testCaseName, className, methodName, statistics);
+        }
+    }
 	
 	/**
      * Write report for class level tests
@@ -97,31 +125,39 @@ public class ReportLogger {
      */
     private static void writeReportClassLevel(String resultFileName, String testSuiteName,
             DescriptiveStatistics statistics) throws IOException {
-    	
+
         File report = getReportFile(resultFileName, ".txt");
 		boolean needsPrefix = !report.exists();
 	    PrintWriter writer = new PrintWriter(
 	    		new FileWriterWithEncoding(report, "UTF-8", true));
 	    try {
 	    	if (needsPrefix) {
-	    		writer.format(
-	    				"# %-34.34s     min     10%%     50%%     90%%     max%n",
-	    				resultFileName);
+	    		writer.format("# %-50.50s     min     10%%     50%%     90%%     max%n", resultFileName);
 	    	}
-	    	
+
 	    	writer.format(
-	    			"%-36.36s  %6.0f  %6.0f  %6.0f  %6.0f  %6.0f%n",
+	    			"%-52.52s  %6.0f  %6.0f  %6.0f  %6.0f  %6.0f%n",
 	    			testSuiteName,
 	    			statistics.getMin(),
 	    			statistics.getPercentile(10.0),
 	    			statistics.getPercentile(50.0),
 	    			statistics.getPercentile(90.0),
 	    			statistics.getMax());
-	    	} finally {
-	    		writer.close();
-	   		}
+        } finally {
+            writer.close();
+        }
 	}
-    
+
+
+    private static void writeCtxReportClassLevel(String resultFileName, String testSuiteName,
+                                              DescriptiveStatistics statistics) throws IOException {
+        SlingTestContextProvider.getContext().output().put("test_min", statistics.getMin());
+        SlingTestContextProvider.getContext().output().put("test_perc10", statistics.getPercentile(10.0));
+        SlingTestContextProvider.getContext().output().put("test_median", statistics.getPercentile(50.0));
+        SlingTestContextProvider.getContext().output().put("test_per90", statistics.getPercentile(90.0));
+        SlingTestContextProvider.getContext().output().put("test_max", statistics.getMax());
+    }
+
     /**
      * Write report for method level tests
      *
@@ -164,6 +200,17 @@ public class ReportLogger {
     		} finally {
     			writer.close();
     		}
+    }
+
+    private static void writeCtxReportMethodLevel(String resultFileName, String testSuiteName, String testCaseName, String className,
+                                                  String methodName, DescriptiveStatistics statistics) throws IOException {
+        SlingTestContextProvider.getContext().output().put("test_testSuiteName", testSuiteName);
+        SlingTestContextProvider.getContext().output().put("test_min", statistics.getMin());
+        SlingTestContextProvider.getContext().output().put("test_perc10", statistics.getPercentile(10.0));
+        SlingTestContextProvider.getContext().output().put("test_median", statistics.getPercentile(50.0));
+        SlingTestContextProvider.getContext().output().put("test_per90", statistics.getPercentile(90.0));
+        SlingTestContextProvider.getContext().output().put("test_max", statistics.getMax());
+
     }
 	    
 	
