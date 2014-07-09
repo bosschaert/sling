@@ -55,65 +55,6 @@
                     </instructions>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <phase>integration-test</phase>
-                        <configuration>
-                            <target>
-                                <!-- Deploy the test bundles in the sling container -->
-                                <exec executable="mvn">
-                                    <arg value="-f"/>
-                                    <arg value="${basedir}/../../junit/core/pom.xml"/>
-                                    <arg value="clean"/>
-                                    <arg value="package"/>
-                                    <arg value="sling:install"/>
-                                    <arg value="-DskipTests"/>
-                                </exec>
-                                
-                                <exec executable="mvn">
-                                    <arg value="-f"/>
-                                    <arg value="${basedir}/../../../performance/base/pom.xml"/>
-                                    <arg value="clean"/>
-                                    <arg value="package"/>
-                                    <arg value="sling:install"/>
-                                    <arg value="-DskipTests"/>
-                                </exec>
-                                
-                                <exec executable="mvn">
-                                    <arg value="-f"/>
-                                    <arg value="${basedir}/pom.xml"/>
-                                    <arg value="clean"/>
-                                    <arg value="package"/>
-                                    <arg value="sling:install"/>
-                                    <arg value="-DskipTests"/>
-                                </exec>
-                                <ac:post to="http://localhost:8080/system/sling/junit/.json" 
-                                         xmlns:ac="antlib:net.sf.antcontrib"/>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>ant-contrib</groupId>
-                        <artifactId>ant-contrib</artifactId>
-                        <version>1.0b3</version>
-                        <exclusions>
-                            <exclusion>
-                                <groupId>ant</groupId>
-                                <artifactId>ant</artifactId>
-                            </exclusion>
-                        </exclusions>
-                    </dependency>
-                </dependencies>
-            </plugin>
         </plugins>
     </build>
 
@@ -168,7 +109,7 @@
             <artifactId>org.apache.sling.jcr.api</artifactId>
             <version>2.0.2-incubator</version>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.performance.tests</artifactId>
             <version>0.0.1-SNAPSHOT</version>
@@ -181,4 +122,77 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <!-- By enabling the perftest profile this bundle is deployed inside a running sling
+                 instance and a single post is made to execute it. This is not yet a full performance
+                 test but it shows how to set up the system so that it can be invoked using posts
+            -->
+            <id>perftest</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.7</version>
+                        <executions>
+                            <execution>
+                                <phase>integration-test</phase>
+                                <configuration>
+                                    <target>
+                                        <!-- Deploy the test bundles in the sling container -->
+                                        <exec executable="mvn">
+                                            <arg value="-f"/>
+                                            <arg value="${basedir}/../../junit/core/pom.xml"/>
+                                            <arg value="clean"/>
+                                            <arg value="package"/>
+                                            <arg value="sling:install"/>
+                                            <arg value="-DskipTests"/>
+                                        </exec>
+                                        
+                                        <exec executable="mvn">
+                                            <arg value="-f"/>
+                                            <arg value="${basedir}/../../../performance/base/pom.xml"/>
+                                            <arg value="clean"/>
+                                            <arg value="package"/>
+                                            <arg value="sling:install"/>
+                                            <arg value="-DskipTests"/>
+                                        </exec>
+                                        
+                                        <exec executable="mvn">
+                                            <arg value="-f"/>
+                                            <arg value="${basedir}/pom.xml"/>
+                                            <arg value="clean"/>
+                                            <arg value="package"/>
+                                            <arg value="sling:install"/>
+                                            <arg value="-DskipTests"/>
+                                        </exec>
+                                        <ac:post to="http://localhost:8080/system/sling/junit/.json" 
+                                                 xmlns:ac="antlib:net.sf.antcontrib"/>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>ant-contrib</groupId>
+                                <artifactId>ant-contrib</artifactId>
+                                <version>1.0b3</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>ant</groupId>
+                                        <artifactId>ant</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
