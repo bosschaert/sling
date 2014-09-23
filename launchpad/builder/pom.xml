@@ -70,6 +70,85 @@
     <build>
         <plugins>
             <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <phase>post-integration-test</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${basedir}/target/esa-work"/>
+                                <exec dir="${basedir}/target/esa-work" executable="jar">
+                                    <arg line="xvf ${basedir}/target/org.apache.sling.launchpad-7-SNAPSHOT-standalone.jar"/>
+                                </exec>
+                                
+                                <mkdir dir="${basedir}/target/esa-dir/OSGI-INF"/>
+                                
+                                <echo file="${basedir}/target/esa-dir/OSGI-INF/SUBSYSTEM.MF">
+Subsystem-SymbolicName: sling-launchpad
+Subsystem-Version: 7.0.0.SNAPSHOT
+Subsystem-Type: osgi.subsystem.feature
+Subsystem-Content: 
+
+                                </echo>
+                                
+                                <copy file="${basedir}/../api/target/org.apache.sling.launchpad.api-1.1.1-SNAPSHOT.jar" 
+                                      todir="${basedir}/target/esa-work/resources/bundles/1"/>
+
+                                <apply executable="sh">
+                                  <arg value="${basedir}/ss_entry.sh"/>
+                                  <arg value="${basedir}/target/esa-dir"/>
+                                  <arg value="1"/>
+                                  <fileset dir="${basedir}/target/esa-work/resources/bundles/1" includes="*.jar"/>
+                                </apply>
+                                
+                                <apply executable="sh">
+                                  <arg value="${basedir}/ss_entry.sh"/>
+                                  <arg value="${basedir}/target/esa-dir"/>
+                                  <arg value="5"/>
+                                  <fileset dir="${basedir}/target/esa-work/resources/install/5" includes="*.jar"/>
+                                </apply>
+
+                                <apply executable="sh">
+                                  <arg value="${basedir}/ss_entry.sh"/>
+                                  <arg value="${basedir}/target/esa-dir"/>
+                                  <arg value="10"/>
+                                  <fileset dir="${basedir}/target/esa-work/resources/install/10" includes="*.jar"/>
+                                </apply>
+
+                                <apply executable="sh">
+                                  <arg value="${basedir}/ss_entry.sh"/>
+                                  <arg value="${basedir}/target/esa-dir"/>
+                                  <arg value="15"/>
+                                  <fileset dir="${basedir}/target/esa-work/resources/install/15" includes="*.jar"/>
+                                </apply>
+
+                                <apply executable="sh">
+                                  <arg value="${basedir}/ss_entry.sh"/>
+                                  <arg value="${basedir}/target/esa-dir"/>
+                                  <arg value="15"/>
+                                  <fileset dir="${basedir}/target/esa-work/resources/install.jackrabbit/15" includes="*.jar"/>
+                                </apply>
+
+                                <apply executable="sh">
+                                  <arg value="${basedir}/ss_entry.sh"/>
+                                  <arg value="${basedir}/target/esa-dir"/>
+                                  <arg value="20"/>
+                                  <fileset dir="${basedir}/target/esa-work/resources/install/0" includes="*.jar"/>
+                                </apply>
+
+                                <zip destfile="${basedir}/target/${project.artifactId}-${project.version}.esa"
+                                     basedir="${basedir}/target/esa-dir"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>ianal-maven-plugin</artifactId>
                 <executions>
